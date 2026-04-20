@@ -3,3 +3,5 @@ langgraph
 langchain-groq
 sentence-transformers
 chromadb
+protobuf==3.20.3
+pysqlite3-binary
