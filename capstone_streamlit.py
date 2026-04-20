@@ -2,8 +2,13 @@ import streamlit as st
 import uuid
 import os
 
-# Set dummy API key if not present, but user will need one for Groq
-# API Key is handled by Streamlit secrets in production
+# Securely grab the API Key so it NEVER crashes
+try:
+    groq_key = st.secrets["GROQ_API_KEY"]
+except Exception:
+    groq_key = os.environ.get("GROQ_API_KEY", "gsk_placeholder_key_to_prevent_crash")
+
+os.environ["GROQ_API_KEY"] = groq_key
 
 @st.cache_resource
 def init_agent():
@@ -48,7 +53,10 @@ if user_input:
             result = agent_module.ask(user_input, st.session_state.thread_id)
             answer = result["answer"]
         except Exception as e:
-            answer = f"Error: {str(e)}"
+            if "gsk_placeholder" in os.environ.get("GROQ_API_KEY", ""):
+                answer = "⚠️ **Action Required**: Please add your Groq API Key to the Streamlit Secrets (Settings -> Secrets) in the bottom right."
+            else:
+                answer = f"Error: {str(e)}"
             
     st.session_state.messages.append({"role": "assistant", "content": answer})
     with st.chat_message("assistant"):
