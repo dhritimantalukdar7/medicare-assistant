@@ -1,5 +1,6 @@
 import os
 import datetime
+import streamlit as st
 from typing import TypedDict, List
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
@@ -7,8 +8,13 @@ from langchain_groq import ChatGroq
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-# API Key check (You will need to set this before running)
-# API Key is handled by Streamlit secrets in production
+# Securely get the API Key from Streamlit Secrets to prevent any crashes
+try:
+    groq_api_key = st.secrets["GROQ_API_KEY"]
+except Exception:
+    groq_api_key = "gsk_placeholder_key_to_prevent_crash"
+
+os.environ["GROQ_API_KEY"] = groq_api_key
 
 # 1. Knowledge Base
 documents = [
@@ -60,16 +66,15 @@ def memory_node(state: CapstoneState):
     msgs = state.get("messages", [])
     question = state["question"]
     msgs.append({"role": "user", "content": question})
-    
-    # Sliding window
     msgs = msgs[-6:]
     
     user_name = state.get("user_name", "")
     if "my name is" in question.lower():
         words = question.lower().split()
-        idx = words.index("is")
-        if idx + 1 < len(words):
-            user_name = words[idx + 1].capitalize()
+        if "is" in words:
+            idx = words.index("is")
+            if idx + 1 < len(words):
+                user_name = words[idx + 1].capitalize()
             
     return {"messages": msgs, "user_name": user_name}
 
@@ -191,7 +196,6 @@ def eval_decision(state: CapstoneState):
     return "save"
 
 graph = StateGraph(CapstoneState)
-
 graph.add_node("memory", memory_node)
 graph.add_node("router", router_node)
 graph.add_node("retrieve", retrieval_node)
@@ -203,20 +207,12 @@ graph.add_node("save", save_node)
 
 graph.set_entry_point("memory")
 graph.add_edge("memory", "router")
-graph.add_conditional_edges(
-    "router",
-    route_decision,
-    {"retrieve": "retrieve", "skip": "skip", "tool": "tool"}
-)
+graph.add_conditional_edges("router", route_decision, {"retrieve": "retrieve", "skip": "skip", "tool": "tool"})
 graph.add_edge("retrieve", "answer")
 graph.add_edge("skip", "answer")
 graph.add_edge("tool", "answer")
 graph.add_edge("answer", "eval")
-graph.add_conditional_edges(
-    "eval",
-    eval_decision,
-    {"answer": "answer", "save": "save"}
-)
+graph.add_conditional_edges("eval", eval_decision, {"answer": "answer", "save": "save"})
 graph.add_edge("save", END)
 
 memory_saver = MemorySaver()
