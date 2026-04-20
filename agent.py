@@ -8,7 +8,7 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 
 # API Key check (You will need to set this before running)
-os.environ["GROQ_API_KEY"] = os.environ.get("GROQ_API_KEY") # Handled by Streamlit secrets in production
+# API Key is handled by Streamlit secrets in production
 
 # 1. Knowledge Base
 documents = [

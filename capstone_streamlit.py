@@ -3,7 +3,7 @@ import uuid
 import os
 
 # Set dummy API key if not present, but user will need one for Groq
-os.environ["GROQ_API_KEY"] = os.environ.get("GROQ_API_KEY") # Handled by Streamlit secrets in production
+# API Key is handled by Streamlit secrets in production
 
 @st.cache_resource
 def init_agent():
