@@ -1,3 +1,12 @@
+# --- CRITICAL FIX FOR STREAMLIT CLOUD CHROMADB ---
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+# -------------------------------------------------
+
 import os
 import datetime
 import streamlit as st
