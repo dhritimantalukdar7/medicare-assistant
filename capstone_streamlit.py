@@ -2,6 +2,15 @@ import streamlit as st
 import uuid
 import os
 
+# --- CRITICAL FIX FOR STREAMLIT CLOUD CHROMADB ---
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+# -------------------------------------------------
+
 # Securely grab the API Key so it NEVER crashes
 try:
     groq_key = st.secrets["GROQ_API_KEY"]
